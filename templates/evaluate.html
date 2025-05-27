@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+    
+
+{% block title %}Evaluate - LLM Evaluation System{% endblock %}
+{% block page_title %}Evaluate LLM Responses{% endblock %}
+
+{% block content %}
+<head>
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/evaluate.css') }}">
+</head>
+
+<div class="evaluate-container">
+    <!-- Evaluation Form -->
+    <div class="evaluation-section">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-clipboard-check"></i>
+                    LLM Response Evaluation
+                </h3>
+                <p class="card-subtitle">Compare and evaluate LLM responses against reference answers</p>
+            </div>
+            
+            <div class="card-body">
+                <form id="evaluateForm" class="evaluation-form">
+                    <!-- Question/Prompt Section -->
+                    <div class="form-group">
+                        <label for="question" class="form-label">
+                            <i class="fas fa-question-circle"></i>
+                            Question / Prompt
+                            <span class="required">*</span>
+                        </label>
+                        <textarea 
+                            id="question" 
+                            name="question" 
+                            class="form-control" 
+                            placeholder="Enter your question or prompt here..."
+                            rows="4"
+                            required
+                        ></textarea>
+                        <div class="form-help">
+                            <small>Provide the original question or prompt that was given to the LLM</small>
+                        </div>
+                    </div>
+
+                    <!-- User LLM Answer Section -->
+                    <div class="form-group">
+                        <label for="user_answer" class="form-label">
+                            <i class="fas fa-robot"></i>
+                            Your LLM Answer to Evaluate
+                            <span class="required">*</span>
+                        </label>
+                        <textarea 
+                            id="user_answer" 
+                            name="user_answer" 
+                            class="form-control" 
+                            placeholder="Paste the LLM response you want to evaluate..."
+                            rows="6"
+                            required
+                        ></textarea>
+                        <div class="form-help">
+                            <small>Paste the response from your LLM that you want to evaluate</small>
+                        </div>
+                    </div>
+
+                    <!-- Reference Answer Section -->
+                    <div class="form-group">
+                        <label for="referenceAnswer" class="form-label">
+                            <i class="fas fa-star"></i>
+                            Reference Answer by Mixtral-8x7B via DeepInfra API
+                            <div class="label-actions">
+                                <button type="button" id="generateReference" class="btn btn-sm btn-outline">
+                                    <i class="fas fa-magic"></i>
+                                    Generate Reference
+                                </button>
+                            </div>
+                        </label>
+                        <div class="reference-container">
+                            <div id="referenceAnswer" class="reference-display">
+                                <div class="placeholder-text">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <p>Reference answer will appear here</p>
+                                    <small>Click "Generate Reference" to create an AI-generated reference answer</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-help">
+                            <small>This reference answer will be used for comparison metrics like BLEU and ROUGE scores</small>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-chart-bar"></i>
+                            Evaluate Answers
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="document.getElementById('evaluateForm').reset(); document.getElementById('evaluationResults').innerHTML = '';">
+                            <i class="fas fa-redo"></i>
+                            Reset Form
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evaluation Results -->
+    <div id="evaluationResults" class="results-section"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const evaluateForm = document.getElementById('evaluateForm');
+        const generateRefBtn = document.getElementById('generateReference');
+        const questionInput = document.getElementById('question');
+        const userAnswerInput = document.getElementById('user_answer');
+        const referenceDisplay = document.getElementById('referenceAnswer');
+
+        // Handle form submission
+        evaluateForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                question: formData.get('question').trim(),
+                user_answer: formData.get('user_answer').trim()
+            };
+
+            // Validation
+            if (!data.question) {
+                showToast('Please enter a question or prompt', 'warning');
+                questionInput.focus();
+                return;
+            }
+
+            if (!data.user_answer) {
+                showToast('Please enter the LLM answer to evaluate', 'warning');
+                userAnswerInput.focus();
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                const response = await fetch('/api/evaluate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Evaluation failed');
+                }
+
+                displayEvaluationResults(result);
+                showToast('Evaluation completed successfully!', 'success');
+                
+                // Scroll to results
+                document.getElementById('evaluationResults').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+
+            } catch (error) {
+                console.error('Evaluation error:', error);
+                showToast(`Evaluation failed: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Handle generate reference button
+        generateRefBtn.addEventListener('click', async function() {
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                showToast('Please enter a question first', 'warning');
+                questionInput.focus();
+                return;
+            }
+
+            try {
+                showLoading();
+                referenceDisplay.innerHTML = `
+                    <div class="loading-text">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Generating reference answer...</p>
+                    </div>
+                `;
+
+                const response = await fetch('/api/evaluate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        user_answer: 'temp' // Temporary to get reference
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to generate reference');
+                }
+
+                referenceDisplay.innerHTML = `
+                    <div class="reference-content">
+                        <div class="reference-header">
+                            <i class="fas fa-star"></i>
+                            <span>AI-Generated Reference Answer</span>
+                            <button class="btn-icon copy-btn" onclick="copyToClipboard('${escapeQuotes(result.reference_answer)}')" title="Copy to clipboard">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="reference-text">
+                            ${escapeHtml(result.reference_answer)}
+                        </div>
+                    </div>
+                `;
+
+                showToast('Reference answer generated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Reference generation error:', error);
+                referenceDisplay.innerHTML = `
+                    <div class="error-text">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Failed to generate reference answer</p>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+                showToast(`Failed to generate reference: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Auto-resize textareas
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+    });
+
+    function displayEvaluationResults(results) {
+        const { scores, reference_answer, overall_score } = results;
+        const resultsContainer = document.getElementById('evaluationResults');
+        
+        // Update reference display if it wasn't already generated
+        const referenceDisplay = document.getElementById('referenceAnswer');
+        if (referenceDisplay.querySelector('.placeholder-text')) {
+            referenceDisplay.innerHTML = `
+                <div class="reference-content">
+                    <div class="reference-header">
+                        <i class="fas fa-star"></i>
+                        <span>AI-Generated Reference Answer</span>
+                        <button class="btn-icon copy-btn" onclick="copyToClipboard('${escapeQuotes(reference_answer)}')" title="Copy to clipboard">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="reference-text">
+                        ${escapeHtml(reference_answer)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        resultsContainer.innerHTML = `
+            <div class="card results-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Evaluation Results
+                    </h3>
+                    <div class="overall-score-badge">
+                        <span class="score-label">Overall Score</span>
+                        <span class="score-value ${getScoreClass(overall_score)}">
+                            ${formatScore(overall_score)}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="scores-grid">
+                        ${renderScoreCards(scores)}
+                    </div>
+                    
+                    <div class="evaluation-summary">
+                        <div class="summary-header">
+                            <h4>Evaluation Summary</h4>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-item">
+                                <strong>Performance Level:</strong> ${getScoreLabel(overall_score)}
+                            </div>
+                            <div class="summary-item">
+                                <strong>Recommendation:</strong> ${getRecommendation(overall_score)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="location.href='/results'">
+                            <i class="fas fa-chart-line"></i>
+                            View All Results
+                        </button>
+                        <button class="btn btn-outline" onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                            Print Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add animation
+        resultsContainer.classList.add('fade-in');
+    }
+
+    function renderScoreCards(scores) {
+        const scoreLabels = {
+            bleu: 'BLEU Score',
+            rouge: 'ROUGE Score', 
+            relevance: 'Relevance',
+            clarity: 'Clarity',
+            actionability: 'Actionability',
+            llm_judge: 'LLM Judge'
+        };
+
+        const scoreIcons = {
+            bleu: 'fas fa-text-width',
+            rouge: 'fas fa-align-left',
+            relevance: 'fas fa-bullseye',
+            clarity: 'fas fa-eye',
+            actionability: 'fas fa-tasks',
+            llm_judge: 'fas fa-gavel'
+        };
+
+        const scoreDescriptions = {
+            bleu: 'Measures text similarity with reference',
+            rouge: 'Evaluates content overlap quality',
+            relevance: 'How well answer addresses question',
+            clarity: 'Response clarity and understanding',
+            actionability: 'Practical usefulness of response',
+            llm_judge: 'AI-based overall quality assessment'
+        };
+
+        return Object.entries(scores)
+            .filter(([key]) => key !== 'overall_score')
+            .map(([key, value]) => `
+                <div class="score-card">
+                    <div class="score-header">
+                        <div class="score-icon">
+                            <i class="${scoreIcons[key] || 'fas fa-chart-bar'}"></i>
+                        </div>
+                        <div class="score-info">
+                            <div class="score-label">${scoreLabels[key] || key}</div>
+                            <div class="score-description">${scoreDescriptions[key] || ''}</div>
+                        </div>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-value">${formatScore(value)}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${getScoreClass(value)}" style="width: ${value * 100}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    function getRecommendation(score) {
+        if (score >= 0.8) return 'Excellent response quality. No improvements needed.';
+        if (score >= 0.7) return 'Good response quality. Minor improvements could be beneficial.';
+        if (score >= 0.6) return 'Acceptable response quality. Some improvements recommended.';
+        if (score >= 0.4) return 'Below average quality. Significant improvements needed.';
+        return 'Poor response quality. Major revision required.';
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function escapeQuotes(text) {
+        return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    function copyToClipboard(text) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!', 'success');
+            }).catch(() => {
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showToast('Copied to clipboard!', 'success');
+        } catch (err) {
+            showToast('Failed to copy to clipboard', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+</script>
+{% endblock %}

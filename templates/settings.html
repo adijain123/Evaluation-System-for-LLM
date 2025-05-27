@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}settings{% endblock %}
+{% block page_title %}settings{% endblock %}
+
+
+{% block content %}
+
+<head>
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+</head>
+
+<div>
+    <div class="content-header">
+        <h1>Settings</h1>
+        <p>Configure evaluation metrics and system behavior</p>
+    </div>
+
+    <div class="settings-container">
+        <!-- Evaluation Metrics Section -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>Evaluation Metrics</h2>
+                <p>Select which metrics to use when evaluating LLM outputs</p>
+            </div>
+            
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-header">
+                        <label class="switch">
+                            <input type="checkbox" id="bleu-toggle" {{ 'checked' if settings.metrics.bleu }}>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="metric-info">
+                            <h3>BLEU Score</h3>
+                            <p>Evaluates the quality of the output against reference answers.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-item">
+                    <div class="metric-header">
+                        <label class="switch">
+                            <input type="checkbox" id="rouge-toggle" {{ 'checked' if settings.metrics.rouge }}>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="metric-info">
+                            <h3>ROUGE Score</h3>
+                            <p>Measures recall-oriented quality of the generated output.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-item">
+                    <div class="metric-header">
+                        <label class="switch">
+                            <input type="checkbox" id="relevance-toggle" {{ 'checked' if settings.metrics.relevance }}>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="metric-info">
+                            <h3>Relevance</h3>
+                            <p>Assesses how well the answer addresses the question.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-item">
+                    <div class="metric-header">
+                        <label class="switch">
+                            <input type="checkbox" id="clarity-toggle" {{ 'checked' if settings.metrics.clarity }}>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="metric-info">
+                            <h3>Clarity</h3>
+                            <p>Measures how clear and understandable the output is.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-item">
+                    <div class="metric-header">
+                        <label class="switch">
+                            <input type="checkbox" id="actionability-toggle" {{ 'checked' if settings.metrics.actionability }}>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="metric-info">
+                            <h3>Actionability</h3>
+                            <p>Evaluates how actionable and practical the output is.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-item">
+                    <div class="metric-header">
+                        <label class="switch">
+                            <input type="checkbox" id="llm_judge-toggle" {{ 'checked' if settings.metrics.llm_judge }}>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="metric-info">
+                            <h3>LLM as Judge</h3>
+                            <p>Uses another LLM to evaluate the quality of the output.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality Thresholds Section -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>Quality Thresholds</h2>
+                <p>Set minimum thresholds for each metric (0-1)</p>
+            </div>
+            
+            <div class="thresholds-grid">
+                <div class="threshold-item">
+                    <label for="bleu-threshold">BLEU</label>
+                    <div class="threshold-input-group">
+                        <input type="range" 
+                               id="bleu-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.thresholds.bleu }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.thresholds.bleu }}</span>
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <label for="rouge-threshold">ROUGE</label>
+                    <div class="threshold-input-group">
+                        <input type="range" 
+                               id="rouge-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.thresholds.rouge }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.thresholds.rouge }}</span>
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <label for="relevance-threshold">Relevance</label>
+                    <div class="threshold-input-group">
+                        <input type="range" 
+                               id="relevance-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.thresholds.relevance }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.thresholds.relevance }}</span>
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <label for="clarity-threshold">Clarity</label>
+                    <div class="threshold-input-group">
+                        <input type="range" 
+                               id="clarity-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.thresholds.clarity }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.thresholds.clarity }}</span>
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <label for="actionability-threshold">Actionability</label>
+                    <div class="threshold-input-group">
+                        <input type="range" 
+                               id="actionability-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.thresholds.actionability }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.thresholds.actionability }}</span>
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <label for="llm_judge-threshold">LLM Judge Score</label>
+                    <div class="threshold-input-group">
+                        <input type="range" 
+                               id="llm_judge-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.thresholds.llm_judge }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.thresholds.llm_judge }}</span>
+                    </div>
+                </div>
+
+                <div class="threshold-item">
+                    <label for="overall-threshold">Overall Score</label>
+                    <div class="threshold-input-group">
+                        <input type="range" 
+                               id="overall-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.thresholds.overall }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.thresholds.overall }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Improvement Loop Section -->
+        <div class="settings-section">
+            <div class="section-header">
+                <h2>Improvement Loop</h2>
+                <p>Configure how the system handles low-quality outputs</p>
+            </div>
+            
+            <div class="improvement-settings">
+                <div class="improvement-item">
+                    <div class="improvement-header">
+                        <label class="switch">
+                            <input type="checkbox" id="improvement-enabled" {{ 'checked' if settings.improvement_loop.enabled }}>
+                            <span class="slider"></span>
+                        </label>
+                        <div class="improvement-info">
+                            <h3>Enable Improvement Loop</h3>
+                            <p>Automatically trigger re-generation for low-quality outputs</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="improvement-item">
+                    <label for="retry-threshold">Retry Threshold</label>
+                    <div class="improvement-input-group">
+                        <input type="range" 
+                               id="retry-threshold" 
+                               min="0" 
+                               max="1" 
+                               step="0.01" 
+                               value="{{ settings.improvement_loop.retry_threshold }}"
+                               class="threshold-slider">
+                        <span class="threshold-value">{{ settings.improvement_loop.retry_threshold }}</span>
+                    </div>
+                    <p class="input-description">Outputs with scores below this threshold will trigger re-generation</p>
+                </div>
+
+                <div class="improvement-item">
+                    <label for="max-retries">Maximum Retries</label>
+                    <div class="improvement-input-group">
+                        <input type="number" 
+                               id="max-retries" 
+                               min="1" 
+                               max="10" 
+                               value="{{ settings.improvement_loop.max_retries }}"
+                               class="number-input">
+                    </div>
+                    <p class="input-description">Maximum number of re-generation attempts per output</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="settings-actions">
+            <button type="button" class="btn btn-secondary" onclick="resetSettings()">
+                Reset to Defaults
+            </button>
+            <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                Save Settings
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize threshold sliders
+document.addEventListener('DOMContentLoaded', function() {
+    const sliders = document.querySelectorAll('.threshold-slider');
+    sliders.forEach(slider => {
+        const valueSpan = slider.nextElementSibling;
+        
+        slider.addEventListener('input', function() {
+            valueSpan.textContent = this.value;
+        });
+    });
+});
+
+// Save settings function
+async function saveSettings() {
+    const settings = {
+        metrics: {
+            bleu: document.getElementById('bleu-toggle').checked,
+            rouge: document.getElementById('rouge-toggle').checked,
+            relevance: document.getElementById('relevance-toggle').checked,
+            clarity: document.getElementById('clarity-toggle').checked,
+            actionability: document.getElementById('actionability-toggle').checked,
+            llm_judge: document.getElementById('llm_judge-toggle').checked
+        },
+        thresholds: {
+            bleu: parseFloat(document.getElementById('bleu-threshold').value),
+            rouge: parseFloat(document.getElementById('rouge-threshold').value),
+            relevance: parseFloat(document.getElementById('relevance-threshold').value),
+            clarity: parseFloat(document.getElementById('clarity-threshold').value),
+            actionability: parseFloat(document.getElementById('actionability-threshold').value),
+            llm_judge: parseFloat(document.getElementById('llm_judge-threshold').value),
+            overall: parseFloat(document.getElementById('overall-threshold').value)
+        },
+        improvement_loop: {
+            enabled: document.getElementById('improvement-enabled').checked,
+            retry_threshold: parseFloat(document.getElementById('retry-threshold').value),
+            max_retries: parseInt(document.getElementById('max-retries').value)
+        }
+    };
+
+    try {
+        const response = await fetch('/api/settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Settings saved successfully!', 'success');
+        } else {
+            showNotification('Error saving settings', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error saving settings', 'error');
+    }
+}
+
+// Reset settings function
+async function resetSettings() {
+    if (confirm('Are you sure you want to reset all settings to defaults?')) {
+        try {
+            const response = await fetch('/api/reset_settings', {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Update UI with default values
+                location.reload();
+            } else {
+                showNotification('Error resetting settings', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error resetting settings', 'error');
+        }
+    }
+}
+
+// Notification system
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

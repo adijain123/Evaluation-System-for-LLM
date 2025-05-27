@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LLM Evaluation System{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<head>
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+
+<div class="dashboard-container">
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ "%.2f"|format(overall_quality) }}</h3>
+                <p>Overall Quality</p>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+2.3%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ total_evaluations }}</h3>
+                <p>Total Evaluations</p>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+12</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-thumbs-up"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ positive_feedback }}</h3>
+                <p>Positive</p>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+{{ positive_feedback }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ issues_identified }}</h3>
+                <p>Issues Identified</p>
+                <div class="stat-change {% if issues_identified > 0 %}negative{% else %}neutral{% endif %}">
+                    <i class="fas fa-{% if issues_identified > 0 %}arrow-up{% else %}minus{% endif %}"></i>
+                    <span>{{ issues_identified }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+        <!-- Quality Metrics Over Time -->
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3 class="card-title">Quality Metrics Over Time</h3>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+                {% if not chart_data %}
+                <div class="no-data">
+                    <i class="fas fa-chart-line"></i>
+                    <p>No evaluation data available yet</p>
+                    <a href="{{ url_for('evaluate') }}" class="btn btn-primary">Start Evaluating</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Feedback Distribution -->
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3 class="card-title">Feedback Distribution</h3>
+                <div class="card-actions">
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="feedbackChart"></canvas>
+                </div>
+                {% if total_evaluations == 0 %}
+                <div class="no-data">
+                    <i class="fas fa-chart-pie"></i>
+                    <p>No feedback data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Overview -->
+    <div class="metrics-section">
+        <div class="section-header">
+            <h2>Key Performance Indicators</h2>
+            <p>Real-time overview of evaluation metrics</p>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h4>Relevance Score</h4>
+                        <p>Average relevance rating</p>
+                    </div>
+                </div>
+                <div class="metric-value">
+                    <span class="value">{% if total_evaluations > 0 %}{{ "%.1f"|format((positive_feedback / total_evaluations * 100)) }}%{% else %}0.0%{% endif %}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if total_evaluations > 0 %}{{ (positive_feedback / total_evaluations * 100) }}%{% else %}0%{% endif %}; background-color: #6366f1;"></div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h4>Clarity Index</h4>
+                        <p>Response clarity rating</p>
+                    </div>
+                </div>
+                <div class="metric-value">
+                    <span class="value">{% if total_evaluations > 0 %}{{ "%.1f"|format(((total_evaluations - issues_identified) / total_evaluations * 100)) }}%{% else %}0.0%{% endif %}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if total_evaluations > 0 %}{{ ((total_evaluations - issues_identified) / total_evaluations * 100) }}%{% else %}0%{% endif %}; background-color: #22c55e;"></div>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h4>Actionability</h4>
+                        <p>Practical usefulness score</p>
+                    </div>
+                </div>
+                <div class="metric-value">
+                    <span class="value">{% if total_evaluations > 0 %}{{ "%.1f"|format((overall_quality * 100)) }}%{% else %}0.0%{% endif %}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% if total_evaluations > 0 %}{{ (overall_quality * 100) }}%{% else %}0%{% endif %}; background-color: #f59e0b;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recent Evaluations</h3>
+                <a href="{{ url_for('results') }}" class="btn btn-outline">View All</a>
+            </div>
+            <div class="card-body">
+                {% if chart_data %}
+                <div class="activity-list">
+                    {% for item in chart_data[-5:] %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Evaluation Completed</div>
+                            <div class="activity-desc">Score: {{ "%.1f"|format((item.score * 100)) }}%</div>
+                        </div>
+                        <div class="activity-time">{{ item.date }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-activity">
+                    <i class="fas fa-history"></i>
+                    <p>No recent activity</p>
+                    <a href="{{ url_for('evaluate') }}" class="btn btn-primary">Start Your First Evaluation</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Chart data from Flask
+    window.chartData = {{ chart_data|safe }};
+    window.feedbackData = {{ feedback_data|safe }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Quality Chart
+        const qualityChartCtx = document.getElementById('qualityChart');
+        if (qualityChartCtx && window.chartData && window.chartData.length > 0) {
+            new Chart(qualityChartCtx, {
+                type: 'line',
+                data: {
+                    labels: window.chartData.map(d => {
+                        const date = new Date(d.date);
+                        return date.toLocaleDateString();
+                    }),
+                    datasets: [{
+                        label: 'Overall Quality',
+                        data: window.chartData.map(d => d.score * 100),
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#8a8a9a',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: { 
+                                color: '#2d2d3a',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            ticks: { 
+                                color: '#8a8a9a',
+                                font: {
+                                    size: 12
+                                },
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: { 
+                                color: '#2d2d3a',
+                                drawBorder: false
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Initialize Feedback Chart
+        const feedbackChartCtx = document.getElementById('feedbackChart');
+        if (feedbackChartCtx && window.feedbackData) {
+            new Chart(feedbackChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Negative'],
+                    datasets: [{
+                        data: [window.feedbackData.positive, window.feedbackData.negative],
+                        backgroundColor: ['#22c55e', '#ef4444'],
+                        borderWidth: 0,
+                        hoverBorderWidth: 2,
+                        hoverBorderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#b4b4c7',
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                location.reload();
+            }
+        }, 30000);
+    });
+</script>
+{% endblock %}

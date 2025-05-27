@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Results{% endblock %}
+{% block page_title %}Results{% endblock %}
+
+{% block content %}
+
+<head>
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/results.css') }}">
+</head>
+
+<div class="">
+    <div class="content-header">
+        <h1>Evaluation Results</h1>
+        <p>Track record of all previous evaluation results</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <form method="GET" action="/results" class="search-form">
+            <div class="search-input-group">
+                <input type="text" 
+                       name="search" 
+                       placeholder="Search by question..." 
+                       value="{{ search_query }}"
+                       class="search-input">
+                <button type="submit" class="search-btn">
+                    <i class="search-icon">🔍</i>
+                </button>
+            </div>
+        </form>
+    </div>
+<a href="/api/evaluations" target="_blank">📂 View All Stored Evaluations (JSON)</a>
+
+    <!-- Results Table -->
+    <div class="results-container">
+        {% if evaluations %}
+            <div class="table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Date</th>
+                            <th>Overall Score</th>
+                            <th>BLEU</th>
+                            <th>ROUGE</th>
+                            <th>Relevance</th>
+                            <th>Clarity</th>
+                            <th>Actionability</th>
+                            <th>LLM Judge</th>
+                            <th>Feedback</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for evaluation in evaluations %}
+                        <tr class="result-row" data-eval-id="{{ evaluation.id }}">
+                            <td class="question-cell">
+                                <div class="question-preview">
+                                    {{ evaluation.question[:100] }}{% if evaluation.question|length > 100 %}...{% endif %}
+                                </div>
+                            </td>
+                            <td class="date-cell">
+                                {{ evaluation.date }}
+                            </td>
+                            <td class="score-cell">
+                                <div class="score-badge score-{{ 'high' if evaluation.overall_score >= 0.7 else 'medium' if evaluation.overall_score >= 0.5 else 'low' }}">
+                                    {{ "%.3f"|format(evaluation.overall_score) }}
+                                </div>
+                            </td>
+                            <td class="metric-cell">
+                                {% if evaluation.scores.bleu is defined %}
+                                    {{ "%.3f"|format(evaluation.scores.bleu) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="metric-cell">
+                                {% if evaluation.scores.rouge is defined %}
+                                    {{ "%.3f"|format(evaluation.scores.rouge) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="metric-cell">
+                                {% if evaluation.scores.relevance is defined %}
+                                    {{ "%.3f"|format(evaluation.scores.relevance) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="metric-cell">
+                                {% if evaluation.scores.clarity is defined %}
+                                    {{ "%.3f"|format(evaluation.scores.clarity) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="metric-cell">
+                                {% if evaluation.scores.actionability is defined %}
+                                    {{ "%.3f"|format(evaluation.scores.actionability) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="metric-cell">
+                                {% if evaluation.scores.llm_judge is defined %}
+                                    {{ "%.3f"|format(evaluation.scores.llm_judge) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="feedback-cell">
+                                {% if evaluation.feedback %}
+                                    <span class="feedback-badge feedback-{{ evaluation.feedback }}">
+                                        {{ evaluation.feedback|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="feedback-badge feedback-none">No Feedback</span>
+                                {% endif %}
+                            </td>
+                            <td class="actions-cell">
+                                <div class="action-buttons">
+                                    <button class="btn-action btn-view" onclick="viewDetails('{{ evaluation.id }}')">
+                                        View
+                                    </button>
+                                    <div class="feedback-actions">
+                                        <button class="btn-feedback btn-positive" onclick="submitFeedback('{{ evaluation.id }}', 'positive')">
+                                            👍
+                                        </button>
+                                        <button class="btn-feedback btn-negative" onclick="submitFeedback('{{ evaluation.id }}', 'negative')">
+                                            👎
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="no-results">
+                <div class="no-results-icon">📊</div>
+                <h3>No Results Found</h3>
+                <p>{% if search_query %}No evaluations match your search query.{% else %}No evaluations have been performed yet. Go to the Evaluate section to start evaluating LLM responses.{% endif %}</p>
+                {% if not search_query %}
+                    <a href="/evaluate" class="btn btn-primary">Start Evaluating</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Result Details Modal -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Evaluation Details</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Content will be loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<script>
+// View details functionality
+function viewDetails(evalId) {
+    const evaluation = {{ evaluations|tojson }}.find(e => e.id === evalId);
+    if (!evaluation) return;
+    
+    const modalBody = document.getElementById('modalBody');
+    modalBody.innerHTML = `
+        <div class="detail-section">
+            <h3>Question</h3>
+            <div class="detail-content">${evaluation.question}</div>
+        </div>
+        <div class="detail-section">
+            <h3>User Answer</h3>
+            <div class="detail-content">${evaluation.user_answer}</div>
+        </div>
+        <div class="detail-section">
+            <h3>Reference Answer</h3>
+            <div class="detail-content">${evaluation.reference_answer}</div>
+        </div>
+        <div class="detail-section">
+            <h3>Scores</h3>
+            <div class="scores-grid">
+                ${evaluation.scores.bleu !== undefined ? `<div class="score-item"><label>BLEU:</label><span>${evaluation.scores.bleu.toFixed(3)}</span></div>` : ''}
+                ${evaluation.scores.rouge !== undefined ? `<div class="score-item"><label>ROUGE:</label><span>${evaluation.scores.rouge.toFixed(3)}</span></div>` : ''}
+                ${evaluation.scores.relevance !== undefined ? `<div class="score-item"><label>Relevance:</label><span>${evaluation.scores.relevance.toFixed(3)}</span></div>` : ''}
+                ${evaluation.scores.clarity !== undefined ? `<div class="score-item"><label>Clarity:</label><span>${evaluation.scores.clarity.toFixed(3)}</span></div>` : ''}
+                ${evaluation.scores.actionability !== undefined ? `<div class="score-item"><label>Actionability:</label><span>${evaluation.scores.actionability.toFixed(3)}</span></div>` : ''}
+                ${evaluation.scores.llm_judge !== undefined ? `<div class="score-item"><label>LLM Judge:</label><span>${evaluation.scores.llm_judge.toFixed(3)}</span></div>` : ''}
+                <div class="score-item overall"><label>Overall Score:</label><span>${evaluation.overall_score.toFixed(3)}</span></div>
+            </div>
+        </div>
+        <div class="detail-section">
+            <h3>Feedback</h3>
+            <div class="detail-content">${evaluation.feedback || 'No feedback provided'}</div>
+        </div>
+    `;
+    
+    document.getElementById('detailsModal').style.display = 'block';
+}
+
+// Submit feedback functionality
+async function submitFeedback(evalId, feedback) {
+    try {
+        const response = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                eval_id: evalId,
+                feedback: feedback
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            // Update the feedback display
+            const row = document.querySelector(`tr[data-eval-id="${evalId}"]`);
+            const feedbackCell = row.querySelector('.feedback-cell');
+            feedbackCell.innerHTML = `<span class="feedback-badge feedback-${feedback}">${feedback.charAt(0).toUpperCase() + feedback.slice(1)}</span>`;
+            
+            showNotification('Feedback submitted successfully!', 'success');
+        } else {
+            showNotification('Error submitting feedback', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error submitting feedback', 'error');
+    }
+}
+
+// Modal functionality
+function closeModal() {
+    document.getElementById('detailsModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('detailsModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Notification system
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+</script>
+{% endblock %}
