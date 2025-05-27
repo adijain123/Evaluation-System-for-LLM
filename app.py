@@ -156,8 +156,8 @@ def calculate_overall_score(scores):
 @app.route('/')
 def dashboard():
     total_evaluations = len(evaluations)
-    positive_feedback = sum(1 for e in evaluations if e.get('overall_score', 0) >= 0.4)
-    issues_identified = sum(1 for e in evaluations if e.get('overall_score', 0) < 0.4)
+    positive_feedback = sum(1 for e in evaluations if e.get('overall_score', 0) >= 0.5)
+    issues_identified = sum(1 for e in evaluations if e.get('overall_score', 0) < 0.5)
     overall_quality = round(sum(e.get('overall_score', 0) for e in evaluations) / len(evaluations), 2) if evaluations else 0
     chart_data = [{'date': e.get('date', ''), 'score': e.get('overall_score', 0)} for e in evaluations[-10:]]
     feedback_data = {'positive': positive_feedback, 'negative': total_evaluations - positive_feedback}
