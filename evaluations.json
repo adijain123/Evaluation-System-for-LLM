@@ -70,5 +70,41 @@
         "overall_score": 0.581,
         "date": "2025-05-28 02:02:23",
         "feedback": null
+    },
+    {
+        "id": "6729f648-4eb9-4594-8f3d-729d34b654f9",
+        "question": "what is neural networks ?",
+        "user_answer": "A neural network is a machine learning model inspired by the human brain, designed to process data and learn patterns by mimicking the way biological neurons work. It consists of interconnected nodes (neurons) arranged in layers that analyze data, make predictions, and can be trained to perform various tasks like pattern recognition and decision-making. \nHere's a more detailed breakdown:\nNeurons (Nodes):",
+        "reference_answer": "Neural networks are a fundamental concept in the field of artificial intelligence (AI) and machine learning (ML). They are inspired by the structure and function of the human brain and are designed to recognize patterns and make decisions based on data.\n\n**What is a Neural Network?**\n\nA neural network is a type of machine learning model that is composed of layers of interconnected nodes or \"neurons.\" Each node receives one or more inputs, performs a computation on those inputs, and then sends the output to other nodes. This process is repeated throughout the network, allowing the model to learn complex patterns and relationships in the data.\n\n**Key Components of a Neural Network:**\n\n1. **Artificial Neurons (Nodes):** These are the basic building blocks of a neural network. Each node receives one or more inputs, performs a computation on those inputs, and then sends the output to other nodes.\n2. **Connections (Synapses):** These are the links between nodes that allow them to communicate with each other.\n3. **Layers:** Neural networks are typically organized into multiple layers, each of which performs a different function. The most common types of layers are:\n\t* **Input Layer:** Receives the input data.\n\t* **Hidden Layers:** Perform complex computations on the input data.\n\t* **Output Layer:** Produces the final output of the network.\n4. **Activation Functions:** These are mathematical functions that introduce non-linearity into the network, allowing it to learn more complex patterns.\n\n**How Neural Networks Work:**\n\n1. **Training:** The neural network is trained on a dataset by adjusting the weights and biases of the connections between nodes.\n2. **Forward Propagation:** The input data is passed through the network, and the output is computed.\n3. **Backward Propagation:** The error between the predicted output and the actual output is computed, and the weights and biases are adjusted to minimize this error.\n4. **Iteration:** Steps 2 and 3 are repeated multiple times until the network converges to a solution.\n\n**Types of Neural Networks:**\n\n1. **Feedforward Networks:** Data flows only in one direction, from input to output.\n2. **Recurrent Neural Networks (RNNs):** Data can flow in a loop, allowing the network to keep track of state.\n3. **Convolutional Neural Networks (CNNs):** Designed for image and video processing, these networks use convolutional and pooling layers to extract features.\n\n**Applications of Neural Networks:**\n\n1. **Image Recognition:** Neural networks are widely used for image classification, object detection, and image segmentation.\n2. **Natural Language Processing (NLP):** Neural networks are used for text classification, sentiment analysis, and language translation.\n3. **Speech Recognition:** Neural networks are used for speech-to-text and voice recognition applications.\n4. **Game Playing:** Neural networks are used in game playing applications, such as Go and Poker.\n\nI hope this helps you understand the basics of neural networks!",
+        "scores": {
+            "bleu": 0.0,
+            "rouge": 0.112,
+            "relevance": 0.9,
+            "clarity": 0.8,
+            "actionability": 0.4,
+            "llm_judge": 0.7,
+            "overall_score": 0.485
+        },
+        "overall_score": 0.485,
+        "date": "2025-05-28 03:20:07",
+        "feedback": null
+    },
+    {
+        "id": "15885376-8b41-4000-b11b-ebd925cb6baa",
+        "question": "What is GPU ?",
+        "user_answer": "bv,jfcluylfiff",
+        "reference_answer": "GPU stands for Graphics Processing Unit. It's a specialized electronic circuit designed to quickly manipulate and alter memory to accelerate the creation of images in a frame buffer intended for output to a display device. In other words, a GPU is a computer chip that's designed to handle the complex mathematical calculations required for graphics rendering, making it an essential component for gaming, video editing, and other graphics-intensive tasks.\n\nHistorically, GPUs were primarily used for graphics rendering, but over time, they've evolved to become more general-purpose computing devices, capable of handling a wide range of tasks beyond just graphics. Today, GPUs are used in various applications, including:\n\n1. **Gaming**: To render high-quality graphics, physics, and simulations.\n2. **Scientific computing**: For tasks like climate modeling, fluid dynamics, and data analysis.\n3. **Artificial intelligence (AI) and machine learning (ML)**: To accelerate deep learning, natural language processing, and computer vision.\n4. **Data analytics**: For data processing, visualization, and mining.\n5. **Professional video editing**: To accelerate video rendering, color grading, and visual effects.\n\nGPUs have several key features that make them suitable for these applications:\n\n1. **Parallel processing**: GPUs have many cores, allowing them to perform multiple calculations simultaneously, which speeds up processing.\n2. **High memory bandwidth**: GPUs have large amounts of memory and high-bandwidth interfaces to quickly access and transfer data.\n3. **Specialized hardware**: GPUs have dedicated hardware for tasks like matrix multiplication, which is essential for many AI and ML algorithms.\n\nIn summary, a GPU is a powerful computer chip that's designed to handle complex graphics and computational tasks, making it an essential component for a wide range of applications.",
+        "scores": {
+            "bleu": 0.0,
+            "rouge": 0.0,
+            "relevance": 0.0,
+            "clarity": 0.0,
+            "actionability": 0.0,
+            "llm_judge": 0.0,
+            "overall_score": 0.0
+        },
+        "overall_score": 0.0,
+        "date": "2025-06-04 01:33:27",
+        "feedback": null
     }
 ]
