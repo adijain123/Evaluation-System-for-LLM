@@ -18,7 +18,7 @@
                 <i class="fas fa-chart-line"></i>
             </div>
             <div class="stat-content">
-                <h3>{{ "%.2f"|format(overall_quality) }}</h3>
+              <h3>{{ (overall_quality * 100) | round(2) }}%</h3>
                 <p>Overall Quality</p>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
@@ -115,7 +115,7 @@
     <!-- Metrics Overview -->
     <div class="metrics-section">
         <div class="section-header">
-            <h2>Key Performance Indicators</h2>
+            <h2>Key Performance Indicators (Overall Summary)</h2>
             <p>Real-time overview of evaluation metrics</p>
         </div>
 
@@ -126,12 +126,12 @@
                         <i class="fas fa-bullseye"></i>
                     </div>
                     <div class="metric-info">
-                        <h4>Relevance Score</h4>
-                        <p>Average relevance rating</p>
+                        <h4>Avg BleU score</h4>
+                        <p></p>
                     </div>
                 </div>
                 <div class="metric-value">
-                    <span class="value">{% if total_evaluations > 0 %}{{ "%.1f"|format((positive_feedback / total_evaluations * 100)) }}%{% else %}0.0%{% endif %}</span>
+                    <span class="value">{% if total_evaluations > 0 %}{{ bleus*100 }}%{% else %}0.0%{% endif %}</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: {% if total_evaluations > 0 %}{{ (positive_feedback / total_evaluations * 100) }}%{% else %}0%{% endif %}; background-color: #6366f1;"></div>
@@ -144,12 +144,12 @@
                         <i class="fas fa-eye"></i>
                     </div>
                     <div class="metric-info">
-                        <h4>Clarity Index</h4>
-                        <p>Response clarity rating</p>
+                        <h4>Avg ROUGE score</h4>
+                        <p></p>
                     </div>
                 </div>
                 <div class="metric-value">
-                    <span class="value">{% if total_evaluations > 0 %}{{ "%.1f"|format(((total_evaluations - issues_identified) / total_evaluations * 100)) }}%{% else %}0.0%{% endif %}</span>
+                    <span class="value">{% if total_evaluations > 0 %}{{ rouges*100 }}%{% else %}0.0%{% endif %}</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: {% if total_evaluations > 0 %}{{ ((total_evaluations - issues_identified) / total_evaluations * 100) }}%{% else %}0%{% endif %}; background-color: #22c55e;"></div>
@@ -162,12 +162,12 @@
                         <i class="fas fa-tasks"></i>
                     </div>
                     <div class="metric-info">
-                        <h4>Actionability</h4>
-                        <p>Practical usefulness score</p>
+                        <h4>Avg LLM_Judge score</h4>
+                        <p></p>
                     </div>
                 </div>
                 <div class="metric-value">
-                    <span class="value">{% if total_evaluations > 0 %}{{ "%.1f"|format((overall_quality * 100)) }}%{% else %}0.0%{% endif %}</span>
+                    <span class="value">{% if total_evaluations > 0 %}{{ llmjudges*100 }}%{% else %}0.0%{% endif %}</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: {% if total_evaluations > 0 %}{{ (overall_quality * 100) }}%{% else %}0%{% endif %}; background-color: #f59e0b;"></div>

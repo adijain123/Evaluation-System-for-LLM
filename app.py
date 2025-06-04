@@ -142,6 +142,7 @@ def evaluate_with_llm_judge(question, answer):
         3. Actionability (0-1): How practical and actionable is it?
 
         Respond only with three numbers separated by commas (relevance,clarity,actionability) and give low values if my LLM answer is small, have grammar errors, other errors etc.
+        If answer look likes humanize instead of LLM give all three parameter less than 0.3.
         Example: 0.8,0.7,0.9
         """
         url = "https://api.deepinfra.com/v1/openai/chat/completions"
@@ -167,9 +168,9 @@ def evaluate_with_llm_judge(question, answer):
                 'llm_judge': round(sum(scores) / 3, 3)
             }
         else:
-            return {'relevance': 0.5, 'clarity': 0.5, 'actionability': 0.5, 'llm_judge': 0.5}
+            return {'relevance': 0, 'clarity': 0, 'actionability': 0, 'llm_judge': 0}
     except:
-        return {'relevance': 0.5, 'clarity': 0.5, 'actionability': 0.5, 'llm_judge': 0.5}
+        return {'relevance': 0, 'clarity': 0, 'actionability': 0, 'llm_judge': 0}
 
 def calculate_overall_score(scores):
     active_scores = []
@@ -184,6 +185,19 @@ def dashboard():
     positive_feedback = sum(1 for e in evaluations if e.get('overall_score', 0) >= 0.5)
     issues_identified = sum(1 for e in evaluations if e.get('overall_score', 0) < 0.5)
     overall_quality = round(sum(e.get('overall_score', 0) for e in evaluations) / len(evaluations), 2) if evaluations else 0
+    
+    bleus = round(
+    sum(e.get('scores', {}).get('bleu', 0) for e in evaluations) / len(evaluations), 2
+    ) if evaluations else 0
+
+    rouges = round(
+    sum(e.get('scores', {}).get('rouge', 0) for e in evaluations) / len(evaluations), 2
+    ) if evaluations else 0
+    
+    llmjudges = round(
+    sum(e.get('scores', {}).get('llm_judge', 0) for e in evaluations) / len(evaluations), 2
+    ) if evaluations else 0
+
     chart_data = [{'date': e.get('date', ''), 'score': e.get('overall_score', 0)} for e in evaluations[-10:]]
     feedback_data = {'positive': positive_feedback, 'negative': total_evaluations - positive_feedback}
     return render_template('dashboard.html',
@@ -192,7 +206,11 @@ def dashboard():
                            positive_feedback=positive_feedback,
                            issues_identified=issues_identified,
                            chart_data=chart_data,
-                           feedback_data=feedback_data)
+                           feedback_data=feedback_data,
+                           bleus=bleus,
+                           rouges=rouges,
+                           llmjudges=llmjudges
+                           )
 
 @app.route('/evaluate')
 def evaluate():
@@ -213,7 +231,15 @@ def api_evaluate():
             scores['rouge'] = calculate_rouge_score(reference_answer, user_answer)
         if any(settings['metrics'][k] for k in ['relevance', 'clarity', 'actionability', 'llm_judge']):
             llm_scores = evaluate_with_llm_judge(question, user_answer)
-            scores.update(llm_scores)
+            # Only include the scores that are enabled
+            if settings['metrics']['relevance']:
+                scores['relevance'] = llm_scores['relevance']
+            if settings['metrics']['clarity']:
+                scores['clarity'] = llm_scores['clarity']
+            if settings['metrics']['actionability']:
+                scores['actionability'] = llm_scores['actionability']
+            if settings['metrics']['llm_judge']:
+                scores['llm_judge'] = llm_scores['llm_judge']
 
         overall_score = calculate_overall_score(scores)
         scores['overall_score'] = overall_score
