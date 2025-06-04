@@ -12,6 +12,23 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+import nltk.data
+import traceback
+
+import nltk
+
+# Download only if not already available
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab')
+
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'default_secret_change_me')
 
@@ -85,15 +102,23 @@ def get_deepinfra_response(prompt):
     except Exception as e:
         return f"Error: {str(e)}"
 
+def normalize(text):
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", "", text)  # Remove punctuation
+    return text.strip()
+
 def calculate_bleu_score(reference, candidate):
     try:
-        reference_tokens = nltk.word_tokenize(reference.lower())
-        candidate_tokens = nltk.word_tokenize(candidate.lower())
+        reference_tokens = nltk.word_tokenize(normalize(reference))
+        candidate_tokens = nltk.word_tokenize(normalize(candidate))
         smoothie = SmoothingFunction().method4
         score = sentence_bleu([reference_tokens], candidate_tokens, smoothing_function=smoothie)
         return round(score, 3)
-    except:
+    except Exception as e:
+        print("BLEU error:", e)
+        traceback.print_exc()
         return 0.0
+
 
 def calculate_rouge_score(reference, candidate):
     try:
