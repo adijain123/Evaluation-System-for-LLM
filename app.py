@@ -136,12 +136,12 @@ def evaluate_with_llm_judge(question, answer):
         Question: {question}
         Answer: {answer}
 
-        Rate the answer for:
+        Rate the answer given by my personal LLM, judge answer on the basis of how an ideal LLM could answer this and give below factors:
         1. Relevance (0-1): How well does it address the question?
         2. Clarity (0-1): How clear and understandable is it?
         3. Actionability (0-1): How practical and actionable is it?
 
-        Respond only with three numbers separated by commas (relevance,clarity,actionability).
+        Respond only with three numbers separated by commas (relevance,clarity,actionability) and give low values if my LLM answer is small, have grammar errors, other errors etc.
         Example: 0.8,0.7,0.9
         """
         url = "https://api.deepinfra.com/v1/openai/chat/completions"
